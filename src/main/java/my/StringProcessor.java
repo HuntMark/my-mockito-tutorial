@@ -10,7 +10,7 @@ public class StringProcessor {
         this.printer = printer;
     }
 
-    public Optional<String> statusAndTest() {
+    public Optional<String> statusAndTest() throws PrinterNotConnectedException {
         printer.printTestPage();
         return Optional.ofNullable(this.currentBuffer);
     }

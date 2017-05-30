@@ -1,5 +1,5 @@
 package my;
 
 public interface Printer {
-    void printTestPage();
+    void printTestPage() throws PrinterNotConnectedException;
 }
