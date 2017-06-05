@@ -1,18 +1,23 @@
 package my;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+
+import static org.junit.Assert.*;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CustomerDAOTest {
@@ -25,6 +30,87 @@ public class CustomerDAOTest {
     @Before
     public void setUp() {
         dao = new CustomerDAO(mockEm);
+        setupCustomers();
+    }
+
+    private Customer homerSimpson, bruceWayne, tyrionLannister;
+
+    private void setupCustomers() {
+        homerSimpson = new Customer(1, "Homer Simpson", "Springfield");
+        bruceWayne = new Customer(2, "Bruce Wayne", "Gotham City");
+        tyrionLannister = new Customer(2, "Tyrion Lannister", "Kings Landing");
+    }
+
+    private Answer<Customer> withCustomerById = new Answer<Customer>() {
+        @Override
+        public Customer answer(InvocationOnMock invocation) throws Throwable {
+            Object[] args = invocation.getArguments();
+            int id = ((Long) args[1]).intValue(); // Cast to int for switch.
+            switch (id) {
+                case 1:
+                    return homerSimpson;
+                case 2:
+                    return bruceWayne;
+                case 3:
+                    return tyrionLannister;
+                default:
+                    return null;
+            }
+        }
+    };
+
+    @Test
+    public void finding_customer_by_id_returns_appropriate_customer() throws Exception {
+        // Given
+        long[] expectedId = {1, 2, 3};
+
+        when(mockEm.find(eq(Customer.class), anyLong())).thenAnswer(withCustomerById);
+
+        // When
+        Optional<Customer> actualCustomer0 = dao.findById(expectedId[0]);
+        Optional<Customer> actualCustomer1 = dao.findById(expectedId[1]);
+        Optional<Customer> actualCustomer2 = dao.findById(expectedId[2]);
+
+        // Then
+        assertEquals("Homer Simpson", actualCustomer0.get().getName());
+        assertEquals("Bruce Wayne", actualCustomer1.get().getName());
+        assertEquals("Tyrion Lannister", actualCustomer2.get().getName());
+    }
+
+    @Test
+    public void finding_existing_customer_should_return_customer_bdd() throws Exception {
+        // Given
+        long expectedId = 10L;
+        String expectedName = "John Doe";
+        String expectedAddress = "21 Main Street";
+        Customer expectedCustomer = new Customer(expectedId, expectedName, expectedAddress);
+
+        given(mockEm.find(Customer.class, expectedId)).willReturn(expectedCustomer);
+
+        // When
+        Optional<Customer> actualCustomer = dao.findById(expectedId);
+
+        // Then
+        assertTrue(actualCustomer.isPresent());
+        assertEquals(expectedId, actualCustomer.get().getId());
+        assertEquals(expectedName, actualCustomer.get().getName());
+        assertEquals(expectedAddress, actualCustomer.get().getAddress());
+    }
+
+    @Mock
+    private TypedQuery<Customer> mockQuery;
+
+    @Test
+    public void finding_all_customers_should_return_all_customers() throws Exception {
+        // Given
+        given(mockQuery.getResultList()).willAnswer(i -> Arrays.asList(homerSimpson, bruceWayne, tyrionLannister));
+        given(mockEm.createQuery(anyString(), eq(Customer.class))).willReturn(mockQuery);
+
+        // When
+        List<Customer> actualCustomers = dao.findAll();
+
+        // Then
+        assertEquals(actualCustomers.size(), 3);
     }
 
     @Test
@@ -128,5 +214,37 @@ public class CustomerDAOTest {
 
         // Then
         assertFalse(actualCustomer.isPresent());
+    }
+
+    @Test
+    public void finding_customer_should_respond_appropriately() throws Exception {
+        long expectedId = 10L;
+        String expectedName = "John Doe";
+        String expectedAddress = "21 Main Street";
+        Customer expectedCustomer1 = new Customer(expectedId, expectedName, expectedAddress);
+        Customer expectedCustomer2 = null;
+
+        when(mockEm.find(Customer.class, expectedId))
+                .thenReturn(expectedCustomer1, expectedCustomer2);
+
+        Optional<Customer> actualCustomer1 = dao.findById(expectedId);
+        Optional<Customer> actualCustomer2 = dao.findById(expectedId);
+
+        assertTrue(actualCustomer1.isPresent());
+        assertFalse(actualCustomer2.isPresent());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void finding_customer_should_throw_exception_up_the_stack() throws Exception {
+        // Given
+        long expectedId = 10L;
+
+        when(mockEm.find(Customer.class, expectedId)).thenThrow(new IllegalArgumentException());
+
+        // When
+        dao.findById(expectedId);
+
+        // Then
+        fail("Exception should be thrown.");
     }
 }
