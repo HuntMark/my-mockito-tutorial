@@ -82,7 +82,7 @@ public class MatchersTest {
         Mockito.reset(test);
 
         // Regular Expression
-        when(test.usesString(matches("^\\\\w+$"))).thenReturn(true);
+        when(test.usesString(matches("^\\w+$"))).thenReturn(true);
         assertTrue(test.usesString("Weak_Password1"));
         assertFalse(test.usesString("@Str0nG!pa$$woR>%42"));
         Mockito.reset(test);
