@@ -148,4 +148,36 @@ public class PrinterTest {
         // Then
         verify(printer, first()).printTestPage();
     }
+
+    @Test
+    public void verificatin_with_actual_parameters() {
+        // Given
+        String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                + "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+        Integer copies = 3;
+        Boolean collate = true;
+
+        // When
+        printer.print(text, copies, collate);
+
+        // Then
+        verify(printer).print(text, copies, collate);
+    }
+
+    @Test
+    public void verificatin_with_actual_parameters_fails() {
+        // Given
+        String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                + "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+        String text2 = "Ut enim ad minim veniam, quis nostrud exercitation ullamco "
+                + "laboris nisi ut aliquip ex ea commodo consequat.";
+        Integer copies = 3;
+        Boolean collate = true;
+
+        // When
+        printer.print(text2, copies, collate);
+
+        // Then
+        verify(printer).print(text, copies, collate);
+    }
 }
