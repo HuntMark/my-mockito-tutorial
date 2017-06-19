@@ -1,5 +1,6 @@
 package my;
 
+import static my.First.first;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.internal.verification.VerificationModeFactory.atLeast;
@@ -122,5 +123,29 @@ public class PrinterTest {
 
         // Then
         verify(printer, only()).printTestPage();
+    }
+
+    @Test
+    public void simple_interaction_verification_first() {
+        // Given
+
+        // When
+        printer.printTestPage();
+        printer.turnOff();
+
+        // Then
+        verify(printer, first()).printTestPage();
+    }
+
+    @Test
+    public void simple_interaction_verification_first_fails() {
+        // Given
+
+        // When
+        printer.turnOff();
+        printer.printTestPage();
+
+        // Then
+        verify(printer, first()).printTestPage();
     }
 }
