@@ -14,7 +14,9 @@ import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.List;
@@ -305,5 +307,49 @@ public class PrinterTest {
         // Then
         verify(printer).print(text, copies, collate);
         verifyNoMoreInteractions(printer);
+    }
+
+    @Test
+    public void verify_in_order() {
+        // Given
+        InOrder inOrder = Mockito.inOrder(printer);
+
+        // When
+        printer.printTestPage();
+        printer.turnOff();
+
+        // Then
+        inOrder.verify(printer).printTestPage();
+        inOrder.verify(printer).turnOff();
+    }
+
+    @Test
+    public void verify_in_order_fails() {
+        // Given
+        InOrder inOrder = Mockito.inOrder(printer);
+
+        // When
+        printer.turnOff();
+        printer.printTestPage();
+
+        // Then
+        inOrder.verify(printer).printTestPage();
+        inOrder.verify(printer).turnOff();
+    }
+
+    @Test
+    public void verify_in_order_multiple() {
+        // Given
+        InOrder inOrder = Mockito.inOrder(printer, list);
+
+        // When
+        printer.printTestPage();
+        list.clear();
+        printer.turnOff();
+
+        // Then
+        inOrder.verify(printer).printTestPage();
+        inOrder.verify(list).clear();
+        inOrder.verify(printer).turnOff();
     }
 }
