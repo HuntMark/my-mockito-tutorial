@@ -2,6 +2,7 @@ package my;
 
 import static my.First.first;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.internal.verification.VerificationModeFactory.atLeast;
 import static org.mockito.internal.verification.VerificationModeFactory.atLeastOnce;
@@ -13,6 +14,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PrinterTest {
@@ -179,5 +183,67 @@ public class PrinterTest {
 
         // Then
         verify(printer).print(text, copies, collate);
+    }
+
+    @Test
+    public void verification_with_timeout() {
+        // Given
+
+        // When
+        Executors.newFixedThreadPool(1).execute(() -> printer.printTestPage());
+
+        // Then
+        verify(printer, timeout(100)).printTestPage();
+    }
+
+    @Test
+    public void verification_with_timeout_fails() throws InterruptedException {
+        // Given
+
+        // When
+        Executors.newFixedThreadPool(1).execute(this::printTestWithSleep);
+
+        // Then
+        verify(printer, timeout(100)).printTestPage();
+    }
+
+    private void printTestWithSleep() {
+        try {
+            Thread.sleep(200L);
+            printer.printTestPage();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void verification_with_timeout_with_verification_mode() {
+        // Given
+        int poolsize = 5;
+
+        // When
+        ExecutorService service = Executors.newFixedThreadPool(poolsize);
+        service.execute(this::printTestWithSleep);
+        service.execute(this::printTestWithSleep);
+        service.execute(this::printTestWithSleep);
+
+        // Then
+        verify(printer, timeout(500).times(3)).printTestPage();
+    }
+
+    @Test
+    public void verification_with_timeout_with_verification_mode_fails() {
+        // Given
+        int poolsize = 1;
+
+        // When
+        ExecutorService service = Executors.newFixedThreadPool(poolsize);
+        service.execute(this::printTestWithSleep);
+        service.execute(this::printTestWithSleep);
+        service.execute(this::printTestWithSleep);
+
+        // Then
+        verify(printer, timeout(500).times(3)).printTestPage();
     }
 }
