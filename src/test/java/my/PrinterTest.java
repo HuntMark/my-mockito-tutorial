@@ -4,6 +4,8 @@ import static my.First.first;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.internal.verification.VerificationModeFactory.atLeast;
 import static org.mockito.internal.verification.VerificationModeFactory.atLeastOnce;
 import static org.mockito.internal.verification.VerificationModeFactory.atMost;
@@ -15,6 +17,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -245,5 +248,62 @@ public class PrinterTest {
 
         // Then
         verify(printer, timeout(500).times(3)).printTestPage();
+    }
+
+    @Mock
+    private List<String> list;
+
+    @Test
+    public void verify_zero_interactions() {
+        // Given
+
+        // When
+
+        // Then
+        verifyZeroInteractions(printer, list);
+    }
+
+    @Test
+    public void verify_zero_interactions_fails() {
+        // Given
+
+        // When
+        printer.printTestPage();
+
+        // Then
+        verifyZeroInteractions(printer, list);
+    }
+
+    @Test
+    public void verify_no_more_interactions() {
+        // Given
+        String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                + "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+        Integer copies = 3;
+        Boolean collate = true;
+
+        // When
+        printer.print(text, copies, collate);
+
+        // Then
+        verify(printer).print(text, copies, collate);
+        verifyNoMoreInteractions(printer);
+    }
+
+    @Test
+    public void verify_no_more_interactions_fails() {
+        // Given
+        String text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
+                + "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.";
+        Integer copies = 3;
+        Boolean collate = true;
+
+        // When
+        printer.print(text, copies, collate);
+        printer.turnOff();
+
+        // Then
+        verify(printer).print(text, copies, collate);
+        verifyNoMoreInteractions(printer);
     }
 }
